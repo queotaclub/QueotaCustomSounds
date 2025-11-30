@@ -16,7 +16,7 @@ on:
 
 env:
   BUILD_NUMBER: ${{ github.run_number }}
-  PROJECT_PATH: "QueotaCustomSounds.csproj"
+  PROJECT_PATH: "QueotaCustomSounds/QueotaCustomSounds.csproj"
   PROJECT_NAME: "QueotaCustomSounds"
   OUTPUT_PATH: "./QueotaCustomSounds"
   TARGET_PLATFORM: "linux"  # Set to "linux" or "windows" based on your target platform
