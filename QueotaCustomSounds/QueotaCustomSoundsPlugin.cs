@@ -122,16 +122,18 @@ Loaded Queota Custom Sounds Plugin!
 
         Server.PrintToConsole($"[QueotaCustomSounds] Playing Zeus kill sound \"{soundPath}\" to {players.Count} players.");
 
+        // Add a server say command
         foreach (var player in players)
         {
             if (player is { IsValid: true })
             {
                 // Emit sound to each player
                 // player.EmitSound(soundPath);
-                Server.PrintToConsole($"[QueotaCustomSounds] Sending sound \"{soundPath}\" to player {player.PlayerName} ({player.SteamID})");
+                // Server.PrintToConsole($"[QueotaCustomSounds] Sending sound \"{soundPath}\" to player {player.PlayerName} ({player.SteamID})");
                 player.ExecuteClientCommand($"play \"{soundPath}\"");
             }
         }
+        Server.ExecuteCommand($"say ϟ ϟ ϟ Ta eM ShOcK ϟ ϟ ϟ, NeWbA?? PiSoU nO FiO, PaEzÃo??? AihH AiHH AhhDDHhhhh");
     }
 }
 
