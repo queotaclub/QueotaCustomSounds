@@ -61,10 +61,18 @@ jobs:
         # Remove build artifacts and directories
         rm -rf ${{ env.OUTPUT_PATH }}/obj
         rm -rf ${{ env.OUTPUT_PATH }}/bin
-        # Remove unnecessary dependency DLLs (keep McMaster.NETCore.Plugins.dll - it's required for plugin discovery)
+        rm -rf ${{ env.OUTPUT_PATH }}/runtimes
+        # Remove unnecessary dependency DLLs (CounterStrikeSharp provides these)
         rm -f ${{ env.OUTPUT_PATH }}/CounterStrikeSharp.API.dll
+        rm -f ${{ env.OUTPUT_PATH }}/McMaster.NETCore.Plugins.dll
         rm -f ${{ env.OUTPUT_PATH }}/Microsoft.DotNet.PlatformAbstractions.dll
         rm -f ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.DependencyModel.dll
+        # Remove all Microsoft.Extensions.* DLLs (CounterStrikeSharp provides these)
+        rm -f ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.*.dll
+        # Remove any other unnecessary .deps.json, .pdb, or .runtimeconfig.json files
+        find ${{ env.OUTPUT_PATH }} -name "*.deps.json" -type f -delete
+        find ${{ env.OUTPUT_PATH }} -name "*.pdb" -type f -delete
+        find ${{ env.OUTPUT_PATH }} -name "*.runtimeconfig.json" -type f -delete
     - name: Zip
       run: zip -r "${{ env.PROJECT_NAME }}.zip" "${{ env.OUTPUT_PATH }}"
     - name: QueotaCustomSounds
