@@ -102,21 +102,27 @@ Loaded Queota Custom Sounds Plugin!
         var soundPath = GetRandomSound();
         if (string.IsNullOrEmpty(soundPath))
         {
+            Server.PrintToConsole("[QueotaCustomSounds] No valid sound available to play for Zeus kill.");
             return;
         }
 
         var players = Utilities.GetPlayers();
         if (players == null)
         {
+            Server.PrintToConsole("[QueotaCustomSounds] No players found to broadcast Zeus kill sound.");
             return;
         }
+
+        Server.PrintToConsole($"[QueotaCustomSounds] Playing Zeus kill sound \"{soundPath}\" to {players.Count} players.");
 
         foreach (var player in players)
         {
             if (player is { IsValid: true })
             {
                 // Emit sound to each player
-                player.EmitSound(soundPath);
+                // player.EmitSound(soundPath);
+                Server.PrintToConsole($"[QueotaCustomSounds] Sending sound \"{soundPath}\" to player {player.PlayerName} ({player.SteamID})");
+                player.ExecuteClientCommand($"play \"{soundPath}\"");
             }
         }
     }
