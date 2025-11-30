@@ -35,7 +35,7 @@ jobs:
     - name: Restore
       run: dotnet restore
     - name: Build
-      run: dotnet build ${{ env.PROJECT_PATH }} -c QueotaCustomSounds -o ${{ env.OUTPUT_PATH }}
+      run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ env.OUTPUT_PATH }}
 
   publish:
     if: github.event_name == 'push'
@@ -51,7 +51,7 @@ jobs:
     - name: Restore
       run: dotnet restore
     - name: Build
-      run: dotnet build ${{ env.PROJECT_PATH }} -c QueotaCustomSounds -o ${{ env.OUTPUT_PATH }}
+      run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ env.OUTPUT_PATH }}
     - name: Clean files
       run: |
         # Remove source code files
@@ -61,9 +61,8 @@ jobs:
         # Remove build artifacts and directories
         rm -rf ${{ env.OUTPUT_PATH }}/obj
         rm -rf ${{ env.OUTPUT_PATH }}/bin
-        # Remove unnecessary dependency DLLs
+        # Remove unnecessary dependency DLLs (keep McMaster.NETCore.Plugins.dll - it's required for plugin discovery)
         rm -f ${{ env.OUTPUT_PATH }}/CounterStrikeSharp.API.dll
-        rm -f ${{ env.OUTPUT_PATH }}/McMaster.NETCore.Plugins.dll
         rm -f ${{ env.OUTPUT_PATH }}/Microsoft.DotNet.PlatformAbstractions.dll
         rm -f ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.DependencyModel.dll
     - name: Zip
