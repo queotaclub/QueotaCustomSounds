@@ -54,14 +54,18 @@ jobs:
       run: dotnet build ${{ env.PROJECT_PATH }} -c QueotaCustomSounds -o ${{ env.OUTPUT_PATH }}
     - name: Clean files
       run: |
-        rm -f \
-          ${{ env.OUTPUT_PATH }}/CounterStrikeSharp.API.dll \
-          ${{ env.OUTPUT_PATH }}/McMaster.NETCore.Plugins.dll \
-          ${{ env.OUTPUT_PATH }}/Microsoft.DotNet.PlatformAbstractions.dll \
-          ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.DependencyModel.dll \
-          ${{ env.OUTPUT_PATH }}/obj \
-          ${{ env.OUTPUT_PATH }}/QueotaCustomSounds.csproj \
-          ${{ env.OUTPUT_PATH }}/*.cs
+        # Remove source code files
+        find ${{ env.OUTPUT_PATH }} -name "*.cs" -type f -delete
+        find ${{ env.OUTPUT_PATH }} -name "*.csproj" -type f -delete
+        find ${{ env.OUTPUT_PATH }} -name "*.sln" -type f -delete
+        # Remove build artifacts and directories
+        rm -rf ${{ env.OUTPUT_PATH }}/obj
+        rm -rf ${{ env.OUTPUT_PATH }}/bin
+        # Remove unnecessary dependency DLLs
+        rm -f ${{ env.OUTPUT_PATH }}/CounterStrikeSharp.API.dll
+        rm -f ${{ env.OUTPUT_PATH }}/McMaster.NETCore.Plugins.dll
+        rm -f ${{ env.OUTPUT_PATH }}/Microsoft.DotNet.PlatformAbstractions.dll
+        rm -f ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.DependencyModel.dll
     - name: Zip
       run: zip -r "${{ env.PROJECT_NAME }}.zip" "${{ env.OUTPUT_PATH }}"
     - name: QueotaCustomSounds
