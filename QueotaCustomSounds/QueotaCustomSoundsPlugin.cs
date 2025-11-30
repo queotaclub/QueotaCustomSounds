@@ -20,9 +20,6 @@ public class QueotaCustomSoundsPlugin : BasePlugin, IPluginConfig<QueotaCustomSo
 
     public override void Load(bool hotReload)
     {
-        // Precache all sounds from config
-        PrecacheSounds();
-        
         // Hook death event
         RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
         
@@ -40,9 +37,6 @@ Loaded Queota Custom Sounds Plugin!
     {
         Config = config ?? new QueotaCustomSoundsConfig();
         Server.PrintToConsole($"Found {Config.Sounds?.Count ?? 0} sounds!");
-        
-        // Precache sounds when config is loaded/updated
-        PrecacheSounds();
     }
 
     public override void Unload(bool hotReload)
@@ -88,26 +82,6 @@ Loaded Queota Custom Sounds Plugin!
     private bool ShouldSkipQueotaCustomSounds() => (Config?.Sounds == null || Config.Sounds.Count == 0);
 
     /// <summary>
-    /// Precache all sounds from the config.
-    /// </summary>
-    private void PrecacheSounds()
-    {
-        if (Config?.Sounds == null || Config.Sounds.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var soundPath in Config.Sounds)
-        {
-            if (!string.IsNullOrEmpty(soundPath))
-            {
-                Server.PrecacheSound(soundPath, true);
-                Server.PrintToConsole($"[QueotaCustomSounds] Precached sound: {soundPath}");
-            }
-        }
-    }
-
-    /// <summary>
     /// Get a random sound path from the config.
     /// </summary>
     /// <returns>Random sound path or empty string if no sounds available</returns>
@@ -139,7 +113,7 @@ Loaded Queota Custom Sounds Plugin!
 
         foreach (var player in players)
         {
-            if (player is { IsValid: true, IsConnected: true })
+            if (player is { IsValid: true })
             {
                 // Emit sound to each player
                 player.EmitSound(soundPath);
