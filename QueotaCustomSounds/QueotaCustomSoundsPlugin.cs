@@ -1,11 +1,12 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Utils;
-
+using Microsoft.Extensions.Logging;
 namespace QueotaCustomSounds;
 
-[MinimumApiVersion(80)]
+[MinimumApiVersion(338)]
 public class QueotaCustomSoundsPlugin : BasePlugin, IPluginConfig<QueotaCustomSoundsConfig>
 {
     public override string ModuleName => "Queota Custom Sounds";
@@ -15,7 +16,7 @@ public class QueotaCustomSoundsPlugin : BasePlugin, IPluginConfig<QueotaCustomSo
     public override string ModuleDescription =>
         "Custom sounds for a better CS2 experience on QUEOTA.club servers.";
 
-    public required QueotaCustomSoundsConfig Config { get; set; }
+    public QueotaCustomSoundsConfig Config { get; set; } = new QueotaCustomSoundsConfig();
 
     public override void Load(bool hotReload)
     {
@@ -32,8 +33,8 @@ Loaded Queota Custom Sounds Plugin!
 
     public void OnConfigParsed(QueotaCustomSoundsConfig config)
     {
-        Config = config;
-        Server.PrintToConsole($"Found {Config.Sounds.Count} sounds!");
+        Config = config ?? new QueotaCustomSoundsConfig();
+        Server.PrintToConsole($"Found {Config.Sounds?.Count ?? 0} sounds!");
     }
 
     public override void Unload(bool hotReload)
@@ -56,8 +57,17 @@ Loaded Queota Custom Sounds Plugin!
         }
 
         var players = Utilities.GetPlayers();
+        if (players == null)
+        {
+            return HookResult.Continue;
+        }
+
         foreach (var player in players)
         {
+            if (player == null || !player.IsValid)
+            {
+                continue;
+            }
             var sound = GetSoundPathForPlayer(player, (CsTeam)@event.Winner);
             PlaySoundForPlayer(player, sound);
         }
@@ -69,7 +79,7 @@ Loaded Queota Custom Sounds Plugin!
     /// Config is empty, or no sounds are set, skip playing the end sounds.
     /// </summary>
     /// <returns>Config is invalid</returns>
-    private bool ShouldSkipQueotaCustomSounds() => (Config.Sounds.Count == 0);
+    private bool ShouldSkipQueotaCustomSounds() => (Config?.Sounds == null || Config.Sounds.Count == 0);
 
     /// <summary>
     /// Get a random sound path from the config.
@@ -78,6 +88,10 @@ Loaded Queota Custom Sounds Plugin!
     /// <param name="winningTeam">Winning team of the round</param>
     private string GetSoundPathForPlayer(CCSPlayerController player, CsTeam winningTeam)
     {
+        if (Config?.Sounds == null || Config.Sounds.Count == 0)
+        {
+            return string.Empty;
+        }
         return Config.Sounds[Random.Shared.NextDistinct(Config.Sounds.Count)];
     }
 
@@ -87,9 +101,15 @@ Loaded Queota Custom Sounds Plugin!
     /// </summary>
     /// <param name="player"></param>
     /// <param name="path">Path to sound file in workshop items</param>
-    private static void PlaySoundForPlayer(CCSPlayerController player, string path) =>
+    private static void PlaySoundForPlayer(CCSPlayerController player, string path)
+    {
+        if (player == null || string.IsNullOrEmpty(path))
+        {
+            return;
+        }
         player.ExecuteClientCommand($"play \"{path}\"");
     }
+}
 
 public class QueotaCustomSoundsConfig : BasePluginConfig
 {

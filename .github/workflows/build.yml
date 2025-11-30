@@ -75,4 +75,4 @@ jobs:
         name: "Build ${{ env.BUILD_NUMBER }}"
         tag: "build-${{ env.BUILD_NUMBER }}"
         body: |
-          Place the plugin in game/csgo/addons/counterstrikesharp/plugins/QueotaCustomSounds
+          Place the plugin in addons/counterstrikesharp/plugins
