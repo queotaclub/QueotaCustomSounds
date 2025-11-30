@@ -20,7 +20,12 @@ public class QueotaCustomSoundsPlugin : BasePlugin, IPluginConfig<QueotaCustomSo
 
     public override void Load(bool hotReload)
     {
-        RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
+        // Precache all sounds from config
+        PrecacheSounds();
+        
+        // Hook death event
+        RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
+        
         Server.PrintToConsole(@"
   __   _  _  ____  __  ____  __      ___  __    _  _  ____ 
  /  \ / )( \(  __)/  \(_  _)/ _\    / __)(  )  / )( \(  _ \
@@ -35,58 +40,78 @@ Loaded Queota Custom Sounds Plugin!
     {
         Config = config ?? new QueotaCustomSoundsConfig();
         Server.PrintToConsole($"Found {Config.Sounds?.Count ?? 0} sounds!");
+        
+        // Precache sounds when config is loaded/updated
+        PrecacheSounds();
     }
 
     public override void Unload(bool hotReload)
     {
-        DeregisterEventHandler<EventRoundEnd>(OnRoundEnd);
+        DeregisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
         Server.PrintToConsole("Unloaded Queota Custom Sounds Plugin!");
     }
 
     /// <summary>
-    /// Handle the round end event.
+    /// Handle the player death event to detect Zeus kills.
     /// </summary>
     /// <param name="event"></param>
     /// <param name="info"></param>
     /// <returns></returns>
-    private HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
+    private HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
     {
         if (ShouldSkipQueotaCustomSounds())
         {
             return HookResult.Continue;
         }
 
-        var players = Utilities.GetPlayers();
-        if (players == null)
+        var attacker = @event.Attacker;
+        var weapon = @event.Weapon;
+
+        if (attacker == null || string.IsNullOrEmpty(weapon))
         {
             return HookResult.Continue;
         }
 
-        foreach (var player in players)
+        // Check if kill was with Zeus (weapon_taser)
+        if (weapon == "taser")
         {
-            if (player == null || !player.IsValid)
-            {
-                continue;
-            }
-            var sound = GetSoundPathForPlayer(player, (CsTeam)@event.Winner);
-            PlaySoundForPlayer(player, sound);
+            BroadcastZeusSound();
         }
 
         return HookResult.Continue;
     }
 
     /// <summary>
-    /// Config is empty, or no sounds are set, skip playing the end sounds.
+    /// Config is empty, or no sounds are set, skip playing sounds.
     /// </summary>
     /// <returns>Config is invalid</returns>
     private bool ShouldSkipQueotaCustomSounds() => (Config?.Sounds == null || Config.Sounds.Count == 0);
 
     /// <summary>
+    /// Precache all sounds from the config.
+    /// </summary>
+    private void PrecacheSounds()
+    {
+        if (Config?.Sounds == null || Config.Sounds.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var soundPath in Config.Sounds)
+        {
+            if (!string.IsNullOrEmpty(soundPath))
+            {
+                Server.PrecacheSound(soundPath, true);
+                Server.PrintToConsole($"[QueotaCustomSounds] Precached sound: {soundPath}");
+            }
+        }
+    }
+
+    /// <summary>
     /// Get a random sound path from the config.
     /// </summary>
-    /// <param name="player">Player that sounds needs to play for</param>
-    /// <param name="winningTeam">Winning team of the round</param>
-    private string GetSoundPathForPlayer(CCSPlayerController player, CsTeam winningTeam)
+    /// <returns>Random sound path or empty string if no sounds available</returns>
+    private string GetRandomSound()
     {
         if (Config?.Sounds == null || Config.Sounds.Count == 0)
         {
@@ -96,18 +121,30 @@ Loaded Queota Custom Sounds Plugin!
     }
 
     /// <summary>
-    /// Send a client command to play a sound from a workshop item for the given player.
-    /// Check the README.md of this project for more info about creating the necessary workshop item.
+    /// Broadcast Zeus kill sound to all players.
     /// </summary>
-    /// <param name="player"></param>
-    /// <param name="path">Path to sound file in workshop items</param>
-    private static void PlaySoundForPlayer(CCSPlayerController player, string path)
+    private void BroadcastZeusSound()
     {
-        if (player == null || string.IsNullOrEmpty(path))
+        var soundPath = GetRandomSound();
+        if (string.IsNullOrEmpty(soundPath))
         {
             return;
         }
-        player.ExecuteClientCommand($"play \"{path}\"");
+
+        var players = Utilities.GetPlayers();
+        if (players == null)
+        {
+            return;
+        }
+
+        foreach (var player in players)
+        {
+            if (player is { IsValid: true, IsConnected: true })
+            {
+                // Emit sound to each player
+                player.EmitSound(soundPath);
+            }
+        }
     }
 }
 

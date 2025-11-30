@@ -69,6 +69,15 @@ jobs:
         rm -f ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.DependencyModel.dll
         # Remove all Microsoft.Extensions.* DLLs (CounterStrikeSharp provides these)
         rm -f ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.*.dll
+        # Remove Serilog DLLs (CounterStrikeSharp provides these)
+        rm -f ${{ env.OUTPUT_PATH }}/Serilog.dll
+        rm -f ${{ env.OUTPUT_PATH }}/Serilog.Extensions.Logging.dll
+        rm -f ${{ env.OUTPUT_PATH }}/Serilog.Sinks.Console.dll
+        rm -f ${{ env.OUTPUT_PATH }}/Serilog.Sinks.File.dll
+        # Remove other unnecessary DLLs (CounterStrikeSharp provides these)
+        rm -f ${{ env.OUTPUT_PATH }}/Scrutor.dll
+        rm -f ${{ env.OUTPUT_PATH }}/Tomlyn.dll
+        rm -f ${{ env.OUTPUT_PATH }}/System.Diagnostics.EventLog.dll
         # Remove any other unnecessary .deps.json, .pdb, or .runtimeconfig.json files
         find ${{ env.OUTPUT_PATH }} -name "*.deps.json" -type f -delete
         find ${{ env.OUTPUT_PATH }} -name "*.pdb" -type f -delete
