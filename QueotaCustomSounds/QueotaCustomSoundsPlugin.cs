@@ -53,8 +53,10 @@ Loaded Queota Custom Sounds Plugin!
     /// <returns></returns>
     private HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
     {
+        Server.PrintToConsole("[QueotaCustomSounds] Player death event detected.");
         if (ShouldSkipQueotaCustomSounds())
         {
+            Server.PrintToConsole("[QueotaCustomSounds] Skipping sound because config is empty or no sounds are set.");
             return HookResult.Continue;
         }
 
@@ -63,6 +65,7 @@ Loaded Queota Custom Sounds Plugin!
 
         if (attacker == null || string.IsNullOrEmpty(weapon))
         {
+            Server.PrintToConsole("[QueotaCustomSounds] No attacker or weapon, skipping sound.");
             return HookResult.Continue;
         }
 
@@ -70,6 +73,10 @@ Loaded Queota Custom Sounds Plugin!
         if (weapon == "taser")
         {
             BroadcastZeusSound();
+        } else {
+            Server.PrintToConsole("[QueotaCustomSounds] Not a Zeus kill, skipping sound.");
+            Server.PrintToConsole($"[QueotaCustomSounds] Attacker: {attacker.PlayerName} ({attacker.SteamID})");
+            Server.PrintToConsole($"[QueotaCustomSounds] Weapon: {weapon}");
         }
 
         return HookResult.Continue;
