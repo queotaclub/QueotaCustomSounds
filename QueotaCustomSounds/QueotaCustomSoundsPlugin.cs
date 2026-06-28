@@ -6,7 +6,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 namespace QueotaCustomSounds;
 
-[MinimumApiVersion(338)]
+[MinimumApiVersion(370)]
 public class QueotaCustomSoundsPlugin : BasePlugin, IPluginConfig<QueotaCustomSoundsConfig>
 {
     public override string ModuleName => "Queota Custom Sounds";
