@@ -1,9 +1,8 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
-using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Utils;
-using Microsoft.Extensions.Logging;
+
 namespace QueotaCustomSounds;
 
 [MinimumApiVersion(370)]
@@ -106,34 +105,65 @@ Loaded Queota Custom Sounds Plugin!
     /// </summary>
     private void BroadcastZeusSound()
     {
-        var soundPath = GetRandomSound();
-        if (string.IsNullOrEmpty(soundPath))
+        var configured = GetRandomSound();
+        if (string.IsNullOrEmpty(configured))
         {
             Server.PrintToConsole("[QueotaCustomSounds] No valid sound available to play for Zeus kill.");
             return;
         }
 
+        // play via client command broke after CS updates (ExecuteClientCommand only runs
+        // FCVAR_CLIENT_CAN_EXECUTE cmds). EmitSound needs the soundevent name from .vsndevts
+        // (workshop generator uses the file basename, e.g. "lasier-martins").
+        var soundEvent = ToSoundEventName(configured);
+
         var players = Utilities.GetPlayers();
-        if (players == null)
+        if (players == null || players.Count == 0)
         {
             Server.PrintToConsole("[QueotaCustomSounds] No players found to broadcast Zeus kill sound.");
             return;
         }
 
-        Server.PrintToConsole($"[QueotaCustomSounds] Playing Zeus kill sound \"{soundPath}\" to {players.Count} players.");
-
-        // Add a server say command
+        var filter = new RecipientFilter();
+        CCSPlayerController? emitter = null;
         foreach (var player in players)
         {
-            if (player is { IsValid: true })
+            if (player is not { IsValid: true })
             {
-                // Emit sound to each player
-                // player.EmitSound(soundPath);
-                // Server.PrintToConsole($"[QueotaCustomSounds] Sending sound \"{soundPath}\" to player {player.PlayerName} ({player.SteamID})");
-                player.ExecuteClientCommand($"play \"{soundPath}\"");
+                continue;
             }
+
+            filter.Add(player);
+            emitter ??= player;
         }
+
+        if (emitter == null || filter.Count == 0)
+        {
+            Server.PrintToConsole("[QueotaCustomSounds] No valid players to receive Zeus kill sound.");
+            return;
+        }
+
+        Server.PrintToConsole(
+            $"[QueotaCustomSounds] Playing Zeus kill soundevent \"{soundEvent}\" (config \"{configured}\") to {filter.Count} players.");
+
+        emitter.EmitSound(soundEvent, filter);
         Server.ExecuteCommand($"say ϟ ϟ ϟ Ta eM ShOcK ϟ ϟ ϟ, NeWbA?? PiSoU nO FiO, PaEzÃo??? AihH AiHH AhhDDHhhhh");
+    }
+
+    /// <summary>
+    /// Map config entry to a soundevent name.
+    /// Accepts either "lasier-martins" or legacy "sounds/queota_sounds/lasier-martins.vsnd".
+    /// </summary>
+    private static string ToSoundEventName(string configured)
+    {
+        var name = configured.Replace('\\', '/').Trim();
+        if (name.EndsWith(".vsnd", StringComparison.OrdinalIgnoreCase))
+        {
+            name = name[..^5];
+        }
+
+        var slash = name.LastIndexOf('/');
+        return slash >= 0 ? name[(slash + 1)..] : name;
     }
 }
 
