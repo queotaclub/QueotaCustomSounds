@@ -9,7 +9,7 @@ namespace QueotaCustomSounds;
 public class QueotaCustomSoundsPlugin : BasePlugin, IPluginConfig<QueotaCustomSoundsConfig>
 {
     public override string ModuleName => "Queota Custom Sounds";
-    public override string ModuleVersion => "0.0.1";
+    public override string ModuleVersion => "0.0.2";
     public override string ModuleAuthor => "QUEOTA";
 
     public override string ModuleDescription =>
@@ -17,9 +17,18 @@ public class QueotaCustomSoundsPlugin : BasePlugin, IPluginConfig<QueotaCustomSo
 
     public QueotaCustomSoundsConfig Config { get; set; } = new QueotaCustomSoundsConfig();
 
+    static QueotaCustomSoundsPlugin()
+    {
+        // ponytail: static self-check only; upgrade = real unit test if weapon aliases grow
+        if (!IsZeusWeapon("taser") || !IsZeusWeapon("weapon_taser") || !IsZeusWeapon("ZEUS")
+            || IsZeusWeapon("ak47"))
+        {
+            throw new InvalidOperationException("[QueotaCustomSounds] IsZeusWeapon self-check failed");
+        }
+    }
+
     public override void Load(bool hotReload)
     {
-        // Hook death event
         RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
         
         Server.PrintToConsole(@"
@@ -47,56 +56,62 @@ Loaded Queota Custom Sounds Plugin!
     /// <summary>
     /// Handle the player death event to detect Zeus kills.
     /// </summary>
-    /// <param name="event"></param>
-    /// <param name="info"></param>
-    /// <returns></returns>
     private HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
     {
-        Server.PrintToConsole("[QueotaCustomSounds] Player death event detected.");
-        if (ShouldSkipQueotaCustomSounds())
-        {
-            Server.PrintToConsole("[QueotaCustomSounds] Skipping sound because config is empty or no sounds are set.");
-            return HookResult.Continue;
-        }
-
         var attacker = @event.Attacker;
         var weapon = @event.Weapon;
 
-        if (attacker == null || string.IsNullOrEmpty(weapon))
+        if (attacker is not { IsValid: true } || string.IsNullOrEmpty(weapon))
         {
-            Server.PrintToConsole("[QueotaCustomSounds] No attacker or weapon, skipping sound.");
             return HookResult.Continue;
         }
 
-        // Check if kill was with Zeus (weapon_taser)
-        if (weapon == "taser")
+        if (!IsZeusWeapon(weapon))
         {
-            BroadcastZeusSound();
-        } else {
-            Server.PrintToConsole("[QueotaCustomSounds] Not a Zeus kill, skipping sound.");
-            Server.PrintToConsole($"[QueotaCustomSounds] Attacker: {attacker.PlayerName} ({attacker.SteamID})");
-            Server.PrintToConsole($"[QueotaCustomSounds] Weapon: {weapon}");
+            return HookResult.Continue;
         }
+
+        Server.PrintToConsole(
+            $"[QueotaCustomSounds] Zeus kill by {attacker.PlayerName} ({attacker.SteamID}), weapon=\"{weapon}\".");
+
+        // Chat is the reliable signal; sound is best-effort and must not gate the announce.
+        AnnounceZeusKill();
+        BroadcastZeusSound();
 
         return HookResult.Continue;
     }
 
     /// <summary>
-    /// Config is empty, or no sounds are set, skip playing sounds.
+    /// player_death.weapon is usually "taser"; accept weapon_taser / zeus too.
     /// </summary>
-    /// <returns>Config is invalid</returns>
-    private bool ShouldSkipQueotaCustomSounds() => (Config?.Sounds == null || Config.Sounds.Count == 0);
+    internal static bool IsZeusWeapon(string weapon)
+    {
+        var w = weapon.Trim();
+        if (w.StartsWith("weapon_", StringComparison.OrdinalIgnoreCase))
+        {
+            w = w[7..];
+        }
+
+        return w.Equals("taser", StringComparison.OrdinalIgnoreCase)
+            || w.Equals("zeus", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AnnounceZeusKill()
+    {
+        Server.ExecuteCommand(
+            "say ϟ ϟ ϟ Ta eM ShOcK ϟ ϟ ϟ, NeWbA?? PiSoU nO FiO, PaEzÃo??? AihH AiHH AhhDDHhhhh");
+    }
 
     /// <summary>
     /// Get a random sound path from the config.
     /// </summary>
-    /// <returns>Random sound path or empty string if no sounds available</returns>
     private string GetRandomSound()
     {
         if (Config?.Sounds == null || Config.Sounds.Count == 0)
         {
             return string.Empty;
         }
+
         return Config.Sounds[Random.Shared.NextDistinct(Config.Sounds.Count)];
     }
 
@@ -147,7 +162,6 @@ Loaded Queota Custom Sounds Plugin!
             $"[QueotaCustomSounds] Playing Zeus kill soundevent \"{soundEvent}\" (config \"{configured}\") to {filter.Count} players.");
 
         emitter.EmitSound(soundEvent, filter);
-        Server.ExecuteCommand($"say ϟ ϟ ϟ Ta eM ShOcK ϟ ϟ ϟ, NeWbA?? PiSoU nO FiO, PaEzÃo??? AihH AiHH AhhDDHhhhh");
     }
 
     /// <summary>
