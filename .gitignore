@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# CounterStrikeSharp PR 1433 checkout used only to pack the API
+.cssharp/
+
 # User-specific files
 *.rsuser
 *.suo

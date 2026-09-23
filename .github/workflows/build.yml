@@ -27,11 +27,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
+    - name: Pack CounterStrikeSharp.API
+      run: bash .github/pack-cssharp.sh
     - name: Restore
       run: dotnet restore
     - name: Build
@@ -43,11 +45,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
+    - name: Pack CounterStrikeSharp.API
+      run: bash .github/pack-cssharp.sh
     - name: Restore
       run: dotnet restore
     - name: Build
@@ -92,3 +96,6 @@ jobs:
         tag: "build-${{ env.BUILD_NUMBER }}"
         body: |
           Place the plugin in addons/counterstrikesharp/plugins
+
+          Built for CS2 1.41.8.2 against CounterStrikeSharp PR #1433 (`2d1b3d7`).
+          The server must run that CounterStrikeSharp build. Stock NuGet 1.0.374 does not include the gamedata fix.
